@@ -1,12 +1,13 @@
-use crate::proc::gray;
+use crate::proc::{binary, gray};
 use crate::window::Window;
 
-use clap::Command;
+use clap::{arg, Command};
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 
+mod alg;
 mod draw;
 mod proc;
 mod window;
@@ -18,6 +19,13 @@ fn cli() -> Command {
         .arg_required_else_help(true)
         .allow_external_subcommands(true)
         .subcommand(Command::new("gray").about("convert to grayscale image"))
+        .subcommand(
+            Command::new("binary").about("convert to binary image").arg(
+                arg!(--threshold <VALUE>)
+                    .help("threshold value (0~255) for binarization.")
+                    .require_equals(true),
+            ),
+        )
 }
 
 fn main() {
@@ -29,6 +37,12 @@ fn main() {
     match matches.subcommand() {
         Some(("gray", _sub_matches)) => {
             painters = gray(raw_image);
+        }
+        Some(("binary", sub_matches)) => {
+            let threshold = sub_matches
+                .get_one::<String>("threshold")
+                .map(|s| s.parse::<u8>().unwrap());
+            painters = binary(raw_image, threshold);
         }
         _ => {
             command.print_help().unwrap();

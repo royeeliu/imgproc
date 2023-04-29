@@ -1,5 +1,5 @@
 use crate::draw::ImagePainter;
-use softbuffer::Surface;
+use softbuffer::{Context, Surface};
 use winit;
 
 pub struct Window {
@@ -10,8 +10,8 @@ pub struct Window {
 
 impl Window {
     pub fn new(window: winit::window::Window, painter: ImagePainter) -> Self {
-        let context = unsafe { softbuffer::Context::new(&window) }.unwrap();
-        let surface = unsafe { softbuffer::Surface::new(&context, &window) }.unwrap();
+        let context = unsafe { Context::new(&window) }.unwrap();
+        let surface = unsafe { Surface::new(&context, &window) }.unwrap();
         Window {
             inner: window,
             surface,
