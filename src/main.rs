@@ -1,6 +1,7 @@
 use crate::proc::gray;
 use crate::window::Window;
 
+use clap::Command;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -10,9 +11,30 @@ mod draw;
 mod proc;
 mod window;
 
+fn cli() -> Command {
+    Command::new("imgproc")
+        .about("A image processing tool")
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .allow_external_subcommands(true)
+        .subcommand(Command::new("gray").about("convert to grayscale image"))
+}
+
 fn main() {
-    let lena_rgba = image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap();
-    let painters = gray(lena_rgba);
+    let mut command = cli();
+    let raw_image = image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap();
+    let painters;
+
+    let matches = cli().get_matches_mut();
+    match matches.subcommand() {
+        Some(("gray", _sub_matches)) => {
+            painters = gray(raw_image);
+        }
+        _ => {
+            command.print_help().unwrap();
+            return;
+        }
+    }
 
     let event_loop = EventLoop::new();
     let mut windows = HashMap::new();
