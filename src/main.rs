@@ -2,6 +2,7 @@ use crate::proc::{binary, gray};
 use crate::view::ImageView;
 
 use clap::{arg, Command};
+use proc::histogram;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -26,6 +27,7 @@ fn cli() -> Command {
                     .require_equals(true),
             ),
         )
+        .subcommand(Command::new("histogram").about("show histogram of the image"))
 }
 
 fn main() {
@@ -43,6 +45,9 @@ fn main() {
                 .get_one::<String>("threshold")
                 .map(|s| s.parse::<u8>().unwrap());
             drawers = binary(image, threshold);
+        }
+        Some(("histogram", _sub_matches)) => {
+            drawers = histogram(image);
         }
         _ => {
             command.print_help().unwrap();
