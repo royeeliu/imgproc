@@ -1,5 +1,5 @@
 use crate::proc::{binary, gray};
-use crate::window::Window;
+use crate::view::ImageView;
 
 use clap::{arg, Command};
 use std::collections::HashMap;
@@ -10,7 +10,7 @@ use winit::window::WindowBuilder;
 mod alg;
 mod draw;
 mod proc;
-mod window;
+mod view;
 
 fn cli() -> Command {
     Command::new("imgproc")
@@ -30,19 +30,19 @@ fn cli() -> Command {
 
 fn main() {
     let mut command = cli();
-    let raw_image = image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap();
-    let painters;
+    let image = image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap();
+    let drawers;
 
     let matches = cli().get_matches_mut();
     match matches.subcommand() {
         Some(("gray", _sub_matches)) => {
-            painters = gray(raw_image);
+            drawers = gray(image);
         }
         Some(("binary", sub_matches)) => {
             let threshold = sub_matches
                 .get_one::<String>("threshold")
                 .map(|s| s.parse::<u8>().unwrap());
-            painters = binary(raw_image, threshold);
+            drawers = binary(image, threshold);
         }
         _ => {
             command.print_help().unwrap();
@@ -51,22 +51,22 @@ fn main() {
     }
 
     let event_loop = EventLoop::new();
-    let mut windows = HashMap::new();
+    let mut views = HashMap::new();
 
     let mut pos = (0, 0);
-    for painter in painters {
+    for drawer in drawers {
         let window = WindowBuilder::new()
             .with_inner_size(winit::dpi::PhysicalSize::new(
-                painter.width(),
-                painter.height(),
+                drawer.width(),
+                drawer.height(),
             ))
             .build(&event_loop)
             .unwrap();
         window.set_outer_position(winit::dpi::PhysicalPosition::new(pos.0, pos.1));
         pos.0 += window.outer_size().width;
 
-        let window = Window::new(window, painter);
-        windows.insert(window.id(), window);
+        let view = ImageView::new(window, drawer);
+        views.insert(view.window_id(), view);
     }
 
     event_loop.run(move |event, _, control_flow| {
@@ -74,15 +74,15 @@ fn main() {
 
         match event {
             Event::RedrawRequested(window_id) => {
-                let window = windows.get_mut(&window_id).unwrap();
-                window.draw();
+                let view = views.get_mut(&window_id).unwrap();
+                view.draw();
             }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 window_id,
             } => {
-                windows.remove(&window_id);
-                if windows.is_empty() {
+                views.remove(&window_id);
+                if views.is_empty() {
                     *control_flow = ControlFlow::Exit;
                 }
             }

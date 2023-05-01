@@ -1,17 +1,14 @@
 use crate::{
     alg::{self, gray::average_gray_level},
-    draw::ImagePainter,
+    draw::ImageDrawer,
 };
 
-pub fn gray(raw_image: image::DynamicImage) -> Vec<ImagePainter> {
+pub fn gray(raw_image: image::DynamicImage) -> Vec<ImageDrawer> {
     let gray_image = raw_image.to_luma8();
-    vec![
-        ImagePainter::from(raw_image),
-        ImagePainter::from(gray_image),
-    ]
+    vec![ImageDrawer::from(raw_image), ImageDrawer::from(gray_image)]
 }
 
-pub fn binary(image: image::DynamicImage, threshold: Option<u8>) -> Vec<ImagePainter> {
+pub fn binary(image: image::DynamicImage, threshold: Option<u8>) -> Vec<ImageDrawer> {
     let gray_image = image.to_luma8();
     let level = match threshold {
         Some(v) => v,
@@ -20,8 +17,8 @@ pub fn binary(image: image::DynamicImage, threshold: Option<u8>) -> Vec<ImagePai
     println!("Binary threshold: {}", level);
     let binary_image = alg::gray::threshold(&gray_image, level);
     vec![
-        ImagePainter::from(image),
-        ImagePainter::from(gray_image),
-        ImagePainter::from(binary_image),
+        ImageDrawer::from(image),
+        ImageDrawer::from(gray_image),
+        ImageDrawer::from(binary_image),
     ]
 }

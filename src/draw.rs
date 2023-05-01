@@ -2,17 +2,25 @@ use image::{DynamicImage, GenericImageView, GrayImage};
 use softbuffer::Surface;
 use std::num::NonZeroU32;
 
-trait Draw {
+pub trait Draw {
     fn draw(&self, surface: &mut Surface);
 }
 
-pub struct ImagePainter {
+pub struct ImageDrawer {
     width: u32,
     height: u32,
     draw: Box<dyn Draw>,
 }
 
-impl ImagePainter {
+impl ImageDrawer {
+    pub fn new(width: u32, height: u32, draw: Box<dyn Draw>) -> Self {
+        ImageDrawer {
+            width,
+            height,
+            draw,
+        }
+    }
+
     pub fn width(&self) -> u32 {
         self.width
     }
@@ -26,23 +34,15 @@ impl ImagePainter {
     }
 }
 
-impl From<DynamicImage> for ImagePainter {
+impl From<DynamicImage> for ImageDrawer {
     fn from(image: DynamicImage) -> Self {
-        ImagePainter {
-            width: image.width(),
-            height: image.height(),
-            draw: Box::new(image),
-        }
+        ImageDrawer::new(image.width(), image.height(), Box::new(image))
     }
 }
 
-impl From<GrayImage> for ImagePainter {
+impl From<GrayImage> for ImageDrawer {
     fn from(image: GrayImage) -> Self {
-        ImagePainter {
-            width: image.width(),
-            height: image.height(),
-            draw: Box::new(image),
-        }
+        ImageDrawer::new(image.width(), image.height(), Box::new(image))
     }
 }
 
