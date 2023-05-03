@@ -2,6 +2,7 @@ use crate::proc::{binary, gray};
 use crate::view::ImageView;
 
 use clap::{arg, Command};
+use image::DynamicImage;
 use proc::histogram;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
@@ -19,35 +20,65 @@ fn cli() -> Command {
         .subcommand_required(true)
         .arg_required_else_help(true)
         .allow_external_subcommands(true)
-        .subcommand(Command::new("gray").about("convert to grayscale image"))
         .subcommand(
-            Command::new("binary").about("convert to binary image").arg(
-                arg!(--threshold <VALUE>)
-                    .help("threshold value (0~255) for binarization.")
-                    .require_equals(true),
-            ),
+            Command::new("gray")
+                .about("convert to grayscale image")
+                .arg(arg!([PATH] ... "path of the image to process")),
         )
-        .subcommand(Command::new("histogram").about("show histogram of the image"))
+        .subcommand(
+            Command::new("binary")
+                .about("convert to binary image")
+                .arg(arg!([PATH] ... "path of the image to process"))
+                .arg(
+                    arg!(--threshold <VALUE>)
+                        .help("threshold value (0~255) for binarization.")
+                        .require_equals(true),
+                ),
+        )
+        .subcommand(
+            Command::new("histogram")
+                .about("show histogram of the image")
+                .arg(arg!([PATH] ... "path of the image to process")),
+        )
+}
+
+fn load_default_image() -> DynamicImage {
+    image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap()
+}
+
+fn load_image(path: Option<&str>) -> DynamicImage {
+    match path {
+        Some(path) => {
+            println!("Using image: {}", path);
+            image::open(path).unwrap()
+        }
+        None => {
+            println!("No image path provided, using default image.");
+            load_default_image()
+        }
+    }
 }
 
 fn main() {
     let mut command = cli();
-    let image = image::load_from_memory(include_bytes!("../res/lena.jpg")).unwrap();
     let drawers;
 
     let matches = cli().get_matches_mut();
     match matches.subcommand() {
-        Some(("gray", _sub_matches)) => {
-            drawers = gray(image);
+        Some(("gray", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
+            drawers = gray(load_image(path));
         }
         Some(("binary", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             let threshold = sub_matches
                 .get_one::<String>("threshold")
                 .map(|s| s.parse::<u8>().unwrap());
-            drawers = binary(image, threshold);
+            drawers = binary(load_image(path), threshold);
         }
-        Some(("histogram", _sub_matches)) => {
-            drawers = histogram(image);
+        Some(("histogram", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
+            drawers = histogram(load_image(path));
         }
         _ => {
             command.print_help().unwrap();
