@@ -1,4 +1,4 @@
-use image::GrayImage;
+use image::{DynamicImage, GenericImageView, GrayImage};
 
 pub fn threshold(image: &GrayImage, level: u8) -> GrayImage {
     let mut out = image.clone();
@@ -32,6 +32,19 @@ pub fn histogram_equalize(image: &GrayImage) -> GrayImage {
     let mut out = image.clone();
     for luma in out.iter_mut() {
         *luma = gray_map[*luma as usize];
+    }
+    out
+}
+
+pub fn split_planes(image: &DynamicImage) -> Vec<GrayImage> {
+    let mut out = Vec::new();
+    for _ in 0..3 {
+        out.push(GrayImage::new(image.width(), image.height()));
+    }
+    for (x, y, pixel) in image.pixels() {
+        out[0].put_pixel(x, y, image::Luma([pixel.0[0]]));
+        out[1].put_pixel(x, y, image::Luma([pixel.0[1]]));
+        out[2].put_pixel(x, y, image::Luma([pixel.0[2]]));
     }
     out
 }

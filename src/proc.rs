@@ -9,9 +9,35 @@ use crate::{
     draw::ImageDrawer,
 };
 
-pub fn gray(image: DynamicImage) -> Vec<ImageDrawer> {
-    let gray_image = image.to_luma8();
-    vec![ImageDrawer::from(image), ImageDrawer::from(gray_image)]
+pub fn gray(image: DynamicImage, color_space: Option<&String>) -> Vec<ImageDrawer> {
+    let mut images = vec![image];
+    let src_image = &images[0];
+
+    match color_space {
+        Some(str) => {
+            let dst_image = match str.as_str() {
+                "hsv" => Some(alg::color::rgb_to_hsv(&src_image)),
+                "hsi" => Some(alg::color::rgb_to_hsi(&src_image)),
+                "hsl" => Some(alg::color::rgb_to_hsl(&src_image)),
+                "yuv" => Some(alg::color::rgb_to_yuv(&src_image)),
+                _ => {
+                    println!("Unknown color space: {}", str);
+                    None
+                }
+            };
+            if let Some(dst_image) = dst_image {
+                let planes = alg::gray::split_planes(&dst_image);
+                images.push(DynamicImage::from(dst_image));
+                planes
+                    .into_iter()
+                    .for_each(|p| images.push(DynamicImage::from(p)));
+            }
+        }
+        None => {
+            images.push(DynamicImage::from(src_image.to_luma8()));
+        }
+    }
+    images.into_iter().map(|i| ImageDrawer::from(i)).collect()
 }
 
 pub fn binary(image: DynamicImage, threshold: Option<u8>) -> Vec<ImageDrawer> {

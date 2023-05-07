@@ -24,7 +24,12 @@ fn cli() -> Command {
         .subcommand(
             Command::new("gray")
                 .about("convert to grayscale image")
-                .arg(arg!([PATH] ... "path of the image to process")),
+                .arg(arg!([PATH] ... "path of the image to process"))
+                .arg(
+                    arg!(--color_space <COLOR_SPACE>)
+                        .help("HSV, HSI, HSL or YUV")
+                        .require_equals(true),
+                ),
         )
         .subcommand(
             Command::new("binary")
@@ -68,7 +73,8 @@ fn main() {
     match matches.subcommand() {
         Some(("gray", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
-            drawers = gray(load_image(path));
+            let color_space = sub_matches.get_one::<String>("color_space");
+            drawers = gray(load_image(path), color_space);
         }
         Some(("binary", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
