@@ -4,10 +4,11 @@ use crate::view::ImageView;
 use clap::{arg, Command};
 use image::DynamicImage;
 use proc::histogram;
+use std::cmp::max;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::WindowBuilder;
+use winit::window::{WindowBuilder, WindowButtons};
 
 mod alg;
 mod draw;
@@ -89,17 +90,27 @@ fn main() {
     let event_loop = EventLoop::new();
     let mut views = HashMap::new();
 
-    let mut pos = (0, 0);
+    let mut pos = winit::dpi::PhysicalPosition::new(0, 0);
+    let mut y_offset = 0;
     for drawer in drawers {
         let window = WindowBuilder::new()
             .with_inner_size(winit::dpi::PhysicalSize::new(
                 drawer.width(),
                 drawer.height(),
             ))
+            .with_resizable(false)
+            .with_enabled_buttons(WindowButtons::CLOSE)
             .build(&event_loop)
             .unwrap();
-        window.set_outer_position(winit::dpi::PhysicalPosition::new(pos.0, pos.1));
-        pos.0 += window.outer_size().width;
+        if let Some(mon) = window.current_monitor() {
+            // 如果不是第一个窗口并且按当前位置排列会超出显示器边界，则将该窗口排到下一行
+            if pos.x > 0 && (pos.x + window.outer_size().width) > mon.size().width {
+                pos = winit::dpi::PhysicalPosition::new(0, y_offset);
+            }
+        }
+        window.set_outer_position(pos);
+        pos.x += window.outer_size().width;
+        y_offset = max(y_offset, pos.y + window.outer_size().height);
 
         let view = ImageView::new(window, drawer);
         views.insert(view.window_id(), view);
