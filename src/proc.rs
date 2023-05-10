@@ -144,8 +144,18 @@ fn draw_histogram_scale(image: &DynamicImage, scale: Option<u64>) -> (DynamicIma
 
 pub fn histogram(image: DynamicImage) -> Vec<ImageDrawer> {
     let gray_image = image.to_luma8();
-    let equalized_image = histogram_equalize(&gray_image);
+    let (hist_original, _) = draw_histogram_scale(&image, None);
 
+    vec![
+        ImageDrawer::from(image),
+        ImageDrawer::from(gray_image),
+        ImageDrawer::from(hist_original),
+    ]
+}
+
+pub fn equalize(image: DynamicImage) -> Vec<ImageDrawer> {
+    let gray_image = image.to_luma8();
+    let equalized_image = histogram_equalize(&gray_image);
     let (hist_original, scale) = draw_histogram_scale(&image, None);
     let hist_equalized = draw_histogram_scale_gray(&equalized_image, Some(scale)).0;
 

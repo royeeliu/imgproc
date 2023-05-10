@@ -1,9 +1,8 @@
-use crate::proc::{binary, gray};
 use crate::view::ImageView;
 
 use clap::{arg, Command};
 use image::DynamicImage;
-use proc::histogram;
+use proc::{binary, equalize, gray, histogram};
 use std::cmp::max;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
@@ -32,7 +31,7 @@ fn cli() -> Command {
                 ),
         )
         .subcommand(
-            Command::new("binary")
+            Command::new("binarize")
                 .about("convert to binary image")
                 .arg(arg!([PATH] ... "path of the image to process"))
                 .arg(
@@ -44,6 +43,11 @@ fn cli() -> Command {
         .subcommand(
             Command::new("histogram")
                 .about("show histogram of the image")
+                .arg(arg!([PATH] ... "path of the image to process")),
+        )
+        .subcommand(
+            Command::new("equalize")
+                .about("equalize histogram")
                 .arg(arg!([PATH] ... "path of the image to process")),
         )
 }
@@ -76,7 +80,7 @@ fn main() {
             let color_space = sub_matches.get_one::<String>("color_space");
             drawers = gray(load_image(path), color_space);
         }
-        Some(("binary", sub_matches)) => {
+        Some(("binarize", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             let threshold = sub_matches
                 .get_one::<String>("threshold")
@@ -86,6 +90,10 @@ fn main() {
         Some(("histogram", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             drawers = histogram(load_image(path));
+        }
+        Some(("equalize", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
+            drawers = equalize(load_image(path));
         }
         _ => {
             command.print_help().unwrap();
