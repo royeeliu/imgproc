@@ -6,7 +6,6 @@ pub struct Hsv {
     pub v: f32,
 }
 
-#[allow(dead_code)]
 impl Hsv {
     pub fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
@@ -270,7 +269,6 @@ pub fn rgb_to_hsv(image: &DynamicImage) -> DynamicImage {
     DynamicImage::from(out)
 }
 
-#[allow(dead_code)]
 pub fn hsv_to_rgb(image: &DynamicImage) -> DynamicImage {
     let mut out = RgbImage::new(image.width(), image.height());
     for (x, y, pixel) in image.pixels() {

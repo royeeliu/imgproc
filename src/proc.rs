@@ -5,11 +5,16 @@ use imageproc::{
 };
 
 use crate::{
-    alg::{self, gray::average_gray_level, gray::histogram_equalize},
+    alg::{
+        self,
+        color::{hsv_to_rgb, rgb_to_hsv},
+        gray::histogram_equalize,
+        gray::{average_gray_level, split_planes},
+    },
     draw::ImageDrawer,
 };
 
-pub fn gray(image: DynamicImage, color_space: Option<&String>) -> Vec<ImageDrawer> {
+pub fn grayscale(image: DynamicImage, color_space: Option<&String>) -> Vec<ImageDrawer> {
     let mut images = vec![image];
     let src_image = &images[0];
 
@@ -40,7 +45,7 @@ pub fn gray(image: DynamicImage, color_space: Option<&String>) -> Vec<ImageDrawe
     images.into_iter().map(|i| ImageDrawer::from(i)).collect()
 }
 
-pub fn binary(image: DynamicImage, threshold: Option<u8>) -> Vec<ImageDrawer> {
+pub fn binarize(image: DynamicImage, threshold: Option<u8>) -> Vec<ImageDrawer> {
     let gray_image = image.to_luma8();
     let level = match threshold {
         Some(v) => v,
@@ -153,17 +158,45 @@ pub fn histogram(image: DynamicImage) -> Vec<ImageDrawer> {
     ]
 }
 
-pub fn equalize(image: DynamicImage) -> Vec<ImageDrawer> {
-    let gray_image = image.to_luma8();
-    let equalized_image = histogram_equalize(&gray_image);
+fn equalize_grayscale(image: DynamicImage) -> Vec<ImageDrawer> {
+    let grayscale = image.to_luma8();
+    let equalized = histogram_equalize(&grayscale);
     let (hist_original, scale) = draw_histogram_scale(&image, None);
-    let hist_equalized = draw_histogram_scale_gray(&equalized_image, Some(scale)).0;
+    let hist_equalized = draw_histogram_scale_gray(&equalized, Some(scale)).0;
 
     vec![
         ImageDrawer::from(image),
-        ImageDrawer::from(gray_image),
-        ImageDrawer::from(equalized_image),
+        ImageDrawer::from(grayscale),
+        ImageDrawer::from(equalized),
         ImageDrawer::from(hist_original),
         ImageDrawer::from(hist_equalized),
     ]
+}
+
+fn equalize_color(image: DynamicImage) -> Vec<ImageDrawer> {
+    let hsv = rgb_to_hsv(&image);
+    let planes = split_planes(&hsv);
+    let value_plane = histogram_equalize(&planes[2]);
+    let mut equalized = RgbaImage::new(hsv.width(), hsv.height());
+    for (x, y, mut pixel) in hsv.pixels() {
+        pixel.0[2] = value_plane.get_pixel(x, y).0[0];
+        equalized.put_pixel(x, y, pixel);
+    }
+    let equalized = hsv_to_rgb(&equalized.into());
+    let (hist_original, scale) = draw_histogram_scale(&image, None);
+    let hist_equalized = draw_histogram_scale(&equalized, Some(scale)).0;
+
+    vec![
+        ImageDrawer::from(image),
+        ImageDrawer::from(equalized),
+        ImageDrawer::from(hist_original),
+        ImageDrawer::from(hist_equalized),
+    ]
+}
+
+pub fn equalize(image: DynamicImage, grayscale_only: bool) -> Vec<ImageDrawer> {
+    match grayscale_only {
+        true => equalize_grayscale(image),
+        false => equalize_color(image),
+    }
 }

@@ -2,7 +2,7 @@ use crate::view::ImageView;
 
 use clap::{arg, Command};
 use image::DynamicImage;
-use proc::{binary, equalize, gray, histogram};
+use proc::{binarize, equalize, grayscale, histogram};
 use std::cmp::max;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
@@ -21,7 +21,7 @@ fn cli() -> Command {
         .arg_required_else_help(true)
         .allow_external_subcommands(true)
         .subcommand(
-            Command::new("gray")
+            Command::new("grayscale")
                 .about("convert to grayscale image")
                 .arg(arg!([PATH] ... "path of the image to process"))
                 .arg(
@@ -48,7 +48,12 @@ fn cli() -> Command {
         .subcommand(
             Command::new("equalize")
                 .about("equalize histogram")
-                .arg(arg!([PATH] ... "path of the image to process")),
+                .arg(arg!([PATH] ... "path of the image to process"))
+                .arg(
+                    arg!(--grayscale)
+                        .help("equalize histogram of grayscale image")
+                        .action(clap::ArgAction::SetTrue),
+                ),
         )
 }
 
@@ -75,17 +80,17 @@ fn main() {
 
     let matches = cli().get_matches_mut();
     match matches.subcommand() {
-        Some(("gray", sub_matches)) => {
+        Some(("grayscale", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             let color_space = sub_matches.get_one::<String>("color_space");
-            drawers = gray(load_image(path), color_space);
+            drawers = grayscale(load_image(path), color_space);
         }
         Some(("binarize", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             let threshold = sub_matches
                 .get_one::<String>("threshold")
                 .map(|s| s.parse::<u8>().unwrap());
-            drawers = binary(load_image(path), threshold);
+            drawers = binarize(load_image(path), threshold);
         }
         Some(("histogram", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
@@ -93,7 +98,8 @@ fn main() {
         }
         Some(("equalize", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
-            drawers = equalize(load_image(path));
+            let grayscale = sub_matches.get_flag("grayscale");
+            drawers = equalize(load_image(path), grayscale);
         }
         _ => {
             command.print_help().unwrap();
