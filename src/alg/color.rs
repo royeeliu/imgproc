@@ -6,6 +6,7 @@ pub struct Hsv {
     pub v: f32,
 }
 
+#[allow(dead_code)]
 impl Hsv {
     pub fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
@@ -77,6 +78,7 @@ struct Hsl {
     l: f32,
 }
 
+#[allow(dead_code)]
 impl Hsl {
     fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
@@ -148,6 +150,7 @@ pub struct Hsi {
     i: f32,
 }
 
+#[allow(dead_code)]
 impl Hsi {
     fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
@@ -221,6 +224,7 @@ pub struct Yuv {
     v: f32,
 }
 
+#[allow(dead_code)]
 impl Yuv {
     fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
@@ -266,6 +270,7 @@ pub fn rgb_to_hsv(image: &DynamicImage) -> DynamicImage {
     DynamicImage::from(out)
 }
 
+#[allow(dead_code)]
 pub fn hsv_to_rgb(image: &DynamicImage) -> DynamicImage {
     let mut out = RgbImage::new(image.width(), image.height());
     for (x, y, pixel) in image.pixels() {
@@ -289,6 +294,7 @@ pub fn rgb_to_hsl(image: &DynamicImage) -> DynamicImage {
     DynamicImage::from(out)
 }
 
+#[allow(dead_code)]
 pub fn hsl_to_rgb(image: &DynamicImage) -> DynamicImage {
     let mut out = RgbImage::new(image.width(), image.height());
     for (x, y, pixel) in image.pixels() {
@@ -312,6 +318,7 @@ pub fn rgb_to_hsi(image: &DynamicImage) -> DynamicImage {
     DynamicImage::from(out)
 }
 
+#[allow(dead_code)]
 pub fn hsi_to_rgb(image: &DynamicImage) -> DynamicImage {
     let mut out = RgbImage::new(image.width(), image.height());
     for (x, y, pixel) in image.pixels() {
@@ -335,6 +342,7 @@ pub fn rgb_to_yuv(image: &DynamicImage) -> DynamicImage {
     DynamicImage::from(out)
 }
 
+#[allow(dead_code)]
 pub fn yuv_to_rgb(image: &DynamicImage) -> DynamicImage {
     let mut out = RgbImage::new(image.width(), image.height());
     for (x, y, pixel) in image.pixels() {
