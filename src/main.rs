@@ -53,6 +53,11 @@ fn cli() -> Command {
                     arg!(--grayscale)
                         .help("equalize histogram of grayscale image")
                         .action(clap::ArgAction::SetTrue),
+                )
+                .arg(
+                    arg!(--color_space <COLOR_SPACE>)
+                        .help("HSV, HSI, HSL or YUV")
+                        .require_equals(true),
                 ),
         )
 }
@@ -99,7 +104,8 @@ fn main() {
         Some(("equalize", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             let grayscale = sub_matches.get_flag("grayscale");
-            drawers = equalize(load_image(path), grayscale);
+            let color_space = sub_matches.get_one::<String>("color_space");
+            drawers = equalize(load_image(path), grayscale, color_space);
         }
         _ => {
             command.print_help().unwrap();
