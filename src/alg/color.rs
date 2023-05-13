@@ -166,21 +166,17 @@ impl Hsi {
         let i = self.i;
         if h >= 0.0 && h < 2.0 * std::f32::consts::PI / 3.0 {
             b = i * (1.0 - s);
-            r = i * (1.0 + s * (h.cos() / (60.0f32).to_radians().cos()));
+            r = i * (1.0 + s * (h.cos() / ((60.0f32).to_radians() - h).cos()));
             g = 3.0 * i - (r + b);
         } else if h >= 2.0 * std::f32::consts::PI / 3.0 && h < 4.0 * std::f32::consts::PI / 3.0 {
+            let h = h - 2.0 * std::f32::consts::PI / 3.0;
             r = i * (1.0 - s);
-            g = i
-                * (1.0
-                    + s * ((h - 2.0 * std::f32::consts::PI / 3.0).cos()
-                        / (60.0f32).to_radians().cos()));
+            g = i * (1.0 + s * (h.cos() / ((60.0f32).to_radians() - h).cos()));
             b = 3.0 * i - (r + g);
         } else {
+            let h = h - 4.0 * std::f32::consts::PI / 3.0;
             g = i * (1.0 - s);
-            b = i
-                * (1.0
-                    + s * ((h - 4.0 * std::f32::consts::PI / 3.0).cos()
-                        / (60.0f32).to_radians().cos()));
+            b = i * (1.0 + s * (h.cos() / ((60.0f32).to_radians() - h).cos()));
             r = 3.0 * i - (g + b);
         }
         Rgb([
@@ -226,8 +222,8 @@ impl Yuv {
     fn as_rgb8(&self) -> Rgb<u8> {
         Rgb([
             (self.y * 255.0).round() as u8,
-            (self.u * 255.0 + 128.0).round() as u8,
-            (self.v * 255.0 + 128.0).round() as u8,
+            ((self.u + 0.5) * 255.0).round() as u8,
+            ((self.v + 0.5) * 255.0).round() as u8,
         ])
     }
 

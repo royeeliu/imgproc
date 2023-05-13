@@ -26,7 +26,7 @@ fn cli() -> Command {
                 .arg(arg!([PATH] ... "path of the image to process"))
                 .arg(
                     arg!(--color_space <COLOR_SPACE>)
-                        .help("HSV, HSI, HSL or YUV")
+                        .help("HSV, HSI, HSL, YUV or RGB")
                         .require_equals(true),
                 ),
         )
@@ -56,7 +56,7 @@ fn cli() -> Command {
                 )
                 .arg(
                     arg!(--color_space <COLOR_SPACE>)
-                        .help("HSV, HSI, HSL or YUV")
+                        .help("HSV, HSI, HSL, YUV or RGB")
                         .require_equals(true),
                 ),
         )

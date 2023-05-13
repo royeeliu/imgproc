@@ -7,10 +7,7 @@ use imageproc::{
 use crate::{
     alg::{
         self,
-        color::{
-            hsi_to_rgb, hsl_to_rgb, hsv_to_rgb, rgb_to_hsi, rgb_to_hsl, rgb_to_hsv, rgb_to_yuv,
-            yuv_to_rgb,
-        },
+        color::*,
         gray::histogram_equalize,
         gray::{average_gray_level, split_planes},
     },
@@ -23,14 +20,31 @@ pub fn grayscale(image: DynamicImage, color_space: Option<&String>) -> Vec<Image
 
     match color_space {
         Some(str) => {
-            let dst_image = match str.as_str() {
-                "hsv" => Some(alg::color::rgb_to_hsv(&src_image)),
-                "hsi" => Some(alg::color::rgb_to_hsi(&src_image)),
-                "hsl" => Some(alg::color::rgb_to_hsl(&src_image)),
-                "yuv" => Some(alg::color::rgb_to_yuv(&src_image)),
+            let (dst_image, recovered) = match str.as_str() {
+                "hsv" => {
+                    let hsv = rgb_to_hsv(&src_image);
+                    let recovered = hsv_to_rgb(&hsv);
+                    (Some(hsv), Some(recovered))
+                }
+                "hsi" => {
+                    let hsi = rgb_to_hsi(&src_image);
+                    let recovered = hsi_to_rgb(&hsi);
+                    (Some(hsi), Some(recovered))
+                }
+                "hsl" => {
+                    let hsl = rgb_to_hsl(&src_image);
+                    let recovered = hsl_to_rgb(&hsl);
+                    (Some(hsl), Some(recovered))
+                }
+                "yuv" => {
+                    let yuv = rgb_to_yuv(&src_image);
+                    let recovered = yuv_to_rgb(&yuv);
+                    (Some(yuv), Some(recovered))
+                }
+                "rgb" => (Some(src_image.clone()), None),
                 _ => {
                     println!("Unknown color space: {}", str);
-                    None
+                    (None, None)
                 }
             };
             if let Some(dst_image) = dst_image {
@@ -39,6 +53,9 @@ pub fn grayscale(image: DynamicImage, color_space: Option<&String>) -> Vec<Image
                 planes
                     .into_iter()
                     .for_each(|p| images.push(DynamicImage::from(p)));
+                if let Some(recovered) = recovered {
+                    images.push(DynamicImage::from(recovered));
+                }
             }
         }
         None => {
@@ -317,6 +334,30 @@ fn equalize_color_yuv(image: DynamicImage) -> Vec<ImageDrawer> {
     ]
 }
 
+fn equalize_color_rgb(image: DynamicImage) -> Vec<ImageDrawer> {
+    let planes = split_planes(&image);
+    let red_plane = histogram_equalize(&planes[0]);
+    let green_plane = histogram_equalize(&planes[1]);
+    let blue_plane = histogram_equalize(&planes[2]);
+    let mut equalized = RgbaImage::new(image.width(), image.height());
+    for (x, y, mut pixel) in image.pixels() {
+        pixel.0[0] = red_plane.get_pixel(x, y).0[0];
+        pixel.0[1] = green_plane.get_pixel(x, y).0[0];
+        pixel.0[2] = blue_plane.get_pixel(x, y).0[0];
+        equalized.put_pixel(x, y, pixel);
+    }
+    let equalized = DynamicImage::from(equalized);
+    let (hist_original, scale) = draw_histogram_scale(&image, None);
+    let hist_equalized = draw_histogram_scale(&equalized, Some(scale)).0;
+
+    vec![
+        ImageDrawer::from(image),
+        ImageDrawer::from(equalized),
+        ImageDrawer::from(hist_original),
+        ImageDrawer::from(hist_equalized),
+    ]
+}
+
 pub fn equalize(
     image: DynamicImage,
     grayscale_only: bool,
@@ -350,6 +391,13 @@ pub fn equalize(
                     equalize_grayscale_luma(image)
                 } else {
                     equalize_color_yuv(image)
+                }
+            }
+            "rgb" => {
+                if grayscale_only {
+                    equalize_grayscale_luma(image)
+                } else {
+                    equalize_color_rgb(image)
                 }
             }
             _ => {
