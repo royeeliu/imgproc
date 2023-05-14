@@ -413,3 +413,23 @@ pub fn equalize(
         }
     }
 }
+
+pub fn invert(image: DynamicImage) -> Vec<ImageDrawer> {
+    let mut inverse = RgbaImage::new(image.width(), image.height());
+    for (x, y, mut pixel) in image.pixels() {
+        pixel.0[0] = 255 - pixel.0[0];
+        pixel.0[1] = 255 - pixel.0[1];
+        pixel.0[2] = 255 - pixel.0[2];
+        inverse.put_pixel(x, y, pixel);
+    }
+    let inverse = DynamicImage::from(inverse);
+    let (hist_original, scale) = draw_histogram_scale(&image, None);
+    let hist_inverse = draw_histogram_scale(&inverse, Some(scale)).0;
+
+    vec![
+        ImageDrawer::from(image),
+        ImageDrawer::from(inverse),
+        ImageDrawer::from(hist_original),
+        ImageDrawer::from(hist_inverse),
+    ]
+}

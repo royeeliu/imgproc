@@ -2,7 +2,7 @@ use crate::view::ImageView;
 
 use clap::{arg, Command};
 use image::DynamicImage;
-use proc::{binarize, equalize, grayscale, histogram};
+use proc::*;
 use std::cmp::max;
 use std::collections::HashMap;
 use winit::event::{Event, WindowEvent};
@@ -60,6 +60,11 @@ fn cli() -> Command {
                         .require_equals(true),
                 ),
         )
+        .subcommand(
+            Command::new("invert")
+                .about("invert image")
+                .arg(arg!([PATH] ... "path of the image to process")),
+        )
 }
 
 fn load_default_image() -> DynamicImage {
@@ -106,6 +111,10 @@ fn main() {
             let grayscale = sub_matches.get_flag("grayscale");
             let color_space = sub_matches.get_one::<String>("color_space");
             drawers = equalize(load_image(path), grayscale, color_space);
+        }
+        Some(("invert", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
+            drawers = invert(load_image(path));
         }
         _ => {
             command.print_help().unwrap();
