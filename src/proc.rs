@@ -433,3 +433,25 @@ pub fn invert(image: DynamicImage) -> Vec<ImageDrawer> {
         ImageDrawer::from(hist_inverse),
     ]
 }
+
+pub fn complement(image: DynamicImage) -> Vec<ImageDrawer> {
+    let mut target = RgbaImage::new(image.width(), image.height());
+    for (x, y, mut pixel) in image.pixels() {
+        let max = pixel.0[1].max(pixel.0[2]).max(pixel.0[0]);
+        let min = pixel.0[1].min(pixel.0[2]).min(pixel.0[0]);
+        pixel.0[0] = max - pixel.0[0] + min;
+        pixel.0[1] = max - pixel.0[1] + min;
+        pixel.0[2] = max - pixel.0[2] + min;
+        target.put_pixel(x, y, pixel);
+    }
+    let target = DynamicImage::from(target);
+    let (hist_original, scale) = draw_histogram_scale(&image, None);
+    let hist_target = draw_histogram_scale(&target, Some(scale)).0;
+
+    vec![
+        ImageDrawer::from(image),
+        ImageDrawer::from(target),
+        ImageDrawer::from(hist_original),
+        ImageDrawer::from(hist_target),
+    ]
+}

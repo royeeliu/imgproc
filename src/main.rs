@@ -65,6 +65,11 @@ fn cli() -> Command {
                 .about("invert image")
                 .arg(arg!([PATH] ... "path of the image to process")),
         )
+        .subcommand(
+            Command::new("complement")
+                .about("show image with complementary colors")
+                .arg(arg!([PATH] ... "path of the image to process")),
+        )
 }
 
 fn load_default_image() -> DynamicImage {
@@ -115,6 +120,10 @@ fn main() {
         Some(("invert", sub_matches)) => {
             let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
             drawers = invert(load_image(path));
+        }
+        Some(("complement", sub_matches)) => {
+            let path = sub_matches.get_one::<String>("PATH").map(|s| s.as_str());
+            drawers = complement(load_image(path));
         }
         _ => {
             command.print_help().unwrap();
